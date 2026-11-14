@@ -313,8 +313,9 @@ function draw3d(){
   ctx.strokeStyle=c('--sun');ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
   ctx.fillStyle=c('--sun');ctx.beginPath();ctx.arc(b[0],b[1],6,0,2*Math.PI);ctx.fill()}
 }
-$('b1').onclick=()=>{p.H=1;p.W=1.2;p.rec=.36;p.P=.5;update()};
-$('b2').onclick=()=>{p.H=2.15;p.W=2;p.rec=.4;p.P=.75;update()};
+const preset=(H,W,rec)=>{Object.assign(p,{H,W,rec});update();p.P=BEST;update()};
+$('b1').onclick=()=>preset(1,1.6,.36);
+$('b2').onclick=()=>preset(2.15,2.6,.4);
 $('b3').onclick=()=>{p.P=BEST;update()};
 {const f=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hourCycle:'h23',hour:'numeric',minute:'numeric'}).formatToParts(new Date()),
   legal=+f.find(x=>x.type=='hour').value+f.find(x=>x.type=='minute').value/60,

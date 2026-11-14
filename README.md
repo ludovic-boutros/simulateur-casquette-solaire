@@ -1,5 +1,7 @@
 # Simulateur de casquette solaire
 
+Site en ligne : https://ludovic-boutros.github.io/simulateur-casquette-solaire/
+
 Page web autonome (un seul fichier `index.html`, sans dépendance) qui simule l'ombre portée d'une casquette au-dessus d'un vitrage en retrait dans le mur, au fil de l'année. Elle aide à choisir la profondeur de casquette qui bloque le soleil d'été tout en laissant entrer celui d'hiver.
 
 Par défaut : Rennes, façade plein sud.
