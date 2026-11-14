@@ -6,7 +6,7 @@ Par défaut : Rennes, façade plein sud.
 
 ## Utilisation
 
-Ouvrir `index.html` dans un navigateur, ou publier le dépôt avec GitHub Pages (branche principale, dossier racine). Aucune étape de build.
+Ouvrir `index.html` dans un navigateur, ou le publier avec GitHub Pages : le workflow `.github/workflows/pages.yml` déploie `index.html` à chaque push sur `main`. Il faut activer une fois Settings > Pages > Source : « GitHub Actions ». Aucune étape de build.
 
 La recherche de ville utilise l'API de géocodage Open-Meteo (accès réseau requis) ; une liste de villes courantes fonctionne hors ligne.
 
