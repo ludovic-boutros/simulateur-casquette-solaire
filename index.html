@@ -8,7 +8,7 @@
 :root{--bg:#eef2f4;--card:#fff;--fg:#12222b;--mut:#5d6f78;--line:#d3dce0;--cap:#0f7c7c;--sun:#e8a000;--sum:#d9442b;--win:#2f6bd6;--wall:#c6ccc9;--glass:#6fb2e0}
 @media(prefers-color-scheme:dark){:root{--bg:#0f1a20;--card:#18262d;--fg:#e6eef1;--mut:#8fa3ad;--line:#2c3e47;--cap:#34b5b5;--wall:#3b4a4f;--glass:#4b86b3}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "Avenir Next","Segoe UI",system-ui,sans-serif;padding:16px;max-width:760px;margin-inline:auto}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "Avenir Next","Segoe UI",system-ui,sans-serif;padding:16px;max-width:1200px;margin-inline:auto}
 h1{font-size:1.45rem;line-height:1.2;margin:.2em 0 .3em}
 h2{font-size:1.05rem;margin:0 0 .6em}
 p.s{color:var(--mut);margin:0 0 1em;font-size:.92rem}
@@ -21,6 +21,20 @@ button:hover,button:focus-visible{background:var(--cap);color:#fff;outline:none}
 svg{width:100%;height:auto;display:block}
 svg:has(.hl){touch-action:pan-y}
 .tip{position:absolute;z-index:4;pointer-events:none;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:.8rem;line-height:1.4;white-space:nowrap;box-shadow:0 2px 8px #0003;font-variant-numeric:tabular-nums}
+canvas{width:100%;aspect-ratio:10/7;display:block;touch-action:none;cursor:grab}
+.layout{display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);gap:14px;align-items:start}
+#params{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;border-radius:10px}
+#params section,.pair section{margin-bottom:0}
+.layout>main{min-width:0}
+.pair{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px}
+@media(min-width:1100px){.pair{grid-template-columns:1fr 1fr}}
+@media(max-width:899px){
+ .layout{display:flex;flex-direction:column;gap:0}
+ #params,.layout>main{display:contents}
+ .pair{order:1}
+ #params>section{order:2;margin-bottom:14px}
+ .layout>main>section{order:3}
+}
 .tip i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
 svg text{fill:var(--mut)}
 .leg span{display:inline-block;margin-right:12px;font-size:.82rem;color:var(--mut)}
@@ -44,13 +58,8 @@ details summary{cursor:pointer;font-weight:600}
 <h1>Quelle profondeur pour la casquette&nbsp;?</h1>
 <p class="s">Simulation de l’ombre portée d’une casquette sur un vitrage en retrait, au fil de l’année. Par défaut&nbsp;: Rennes, plein sud.</p>
 
-<section>
-  <h2>Vue en coupe</h2>
-  <div id="side"></div>
-  <div class="leg"><span><i style="background:var(--sun)"></i>soleil choisi</span><span><i style="background:var(--sum)"></i>midi, 21 juin</span><span><i style="background:var(--win)"></i>midi, 21 déc.</span><span><i style="background:var(--sum);height:6px"></i>ombre sur la vitre</span></div>
-  <p id="now" style="margin:.8em 0 0"></p>
-</section>
-
+<div class="layout">
+<aside id="params">
 <section>
   <h2>Votre ouverture</h2>
   <button id="b1">Fenêtre 1 m</button><button id="b2">Baie vitrée 2,15 m</button><button id="b3">Appliquer le débord optimal</button>
@@ -62,6 +71,23 @@ details summary{cursor:pointer;font-weight:600}
   <p id="sunData" class="note" style="margin:.6em 0 0"></p>
   <details><summary>Lieu et orientation</summary><div id="c3"></div></details>
 </section>
+</aside>
+<main>
+<div class="pair">
+<section>
+  <h2>Vue en coupe</h2>
+  <div id="side"></div>
+  <div class="leg"><span><i style="background:var(--sun)"></i>soleil choisi</span><span><i style="background:var(--sum)"></i>midi, 21 juin</span><span><i style="background:var(--win)"></i>midi, 21 déc.</span><span><i style="background:var(--sum);height:6px"></i>ombre sur la vitre</span></div>
+  <p id="now" style="margin:.8em 0 0"></p>
+</section>
+
+<section>
+  <h2>Vue 3D</h2>
+  <canvas id="c3d"></canvas>
+  <div class="leg"><span><i style="background:var(--sun)"></i>vitrage au soleil</span><span><i style="background:#1d3a4d"></i>vitrage à l’ombre</span></div>
+  <p class="note" style="margin:.6em 0 0">Faites glisser pour tourner la vue. L’ombre inclut celle de la casquette et celle de la joue latérale du retrait (si l’option est cochée).</p>
+</section>
+</div>
 
 <section>
   <h2>Part du soleil direct qui entre</h2>
@@ -91,12 +117,16 @@ details summary{cursor:pointer;font-weight:600}
   <p class="note">Horizontalement&nbsp;: le débord de la casquette. Verticalement&nbsp;: la part du soleil direct qui entre dans la pièce, en moyenne sur la saison. À gauche (0 cm), il n’y a que le retrait. Plus on avance à droite, plus la casquette bloque de soleil, en été comme en hiver. On cherche l’endroit où la courbe rouge (été) est basse alors que la bleue (hiver) reste haute.</p>
 </section>
 
+</main>
+</div>
+
 <p class="note" id="hyp"></p>
 
 <script>
 const $=id=>document.getElementById(id), R=Math.PI/180;
 let BEST=0;
-const p={H:1,W:1.2,rec:.4,P:.6,g:0,day:172,hr:14,lat:48.11,lon:-1.68,ori:180,lat_on:true};
+const dt=new Date(),today=Math.min(365,Math.round((Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate())-Date.UTC(dt.getFullYear(),0,0))/864e5));
+const p={H:1,W:1.2,rec:.36,P:.6,g:0,day:today,hr:14,lat:48.11,lon:-1.68,ori:194,lat_on:true};
 const G=[
  ['c1',[['H','Hauteur du vitrage',.5,3,.05,'m'],['W','Largeur du vitrage',.4,3.5,.05,'m'],['rec','Retrait du vitrage dans le mur',0,.8,.01,'m'],['P','Débord de la casquette (hors du mur)',0,1.5,.01,'m'],['g','Casquette au-dessus du vitrage',0,.5,.01,'m'],['day','Date',1,365,1,''],['hr','Heure solaire',4,22,.25,'']]],
  ['c3',[['lat','Latitude',-66,66,.01,'°'],['lon','Longitude',-180,180,.01,'°'],['ori','Orientation de la façade (180 = sud, 0 = nord)',0,360,1,'°']]]];
@@ -203,7 +233,7 @@ async function search(q){
  catch(e){if(my!=seq)return;show(loc,'Recherche en ligne impossible ('+e.message+'). Ouvrez la page dans un navigateur, hors aperçu intégré.')}}
 function pick(c){p.lat=+c.latitude.toFixed(2);p.lon=+c.longitude.toFixed(2);TZ=c.timezone||TZ;p.ori=c.latitude<0?0:180;cityIn.value=c.name;CITY=c.name;CLAT=p.lat;CLON=p.lon;sug.innerHTML='';update()}
 function update(){
- sync();side();
+ sync();side();draw3d();
  const o=sun(p.day,p.hr),dst=tzOff(TZ,p.day),lo=-p.lon/15+dst-eot(p.day)/60,lg=((p.hr+lo)%24+24)%24;
  const hh=Math.floor(lg),mm=String(Math.round((lg-hh)*60)%60).padStart(2,'0');
  const comp=(((180+o.A)%360)+360)%360;
@@ -237,9 +267,59 @@ function update(){
  chart('ch3',{x0:4+off,x1:22+off,ticks:rng(Math.ceil(4+off),Math.floor(22+off)).filter(h=>h%2==0).map(h=>[h,h+' h']),marks:[[p.hr+off,'var(--sun)']],xfmt:hm,series:[{pts:D,c:'var(--mut)',dash:1,name:'Retrait seul'},{pts:E,c:'var(--cap)',name:'Avec casquette'}]});
  $('ch3s').innerHTML=sw?`Soleil sur la façade de ${hm(t0)} à ${hm(t1)}. Sur la journée, <b>${(100*sa/sw).toFixed(0)} %</b> du soleil direct entre avec le retrait seul, <b>${(100*sb/sw).toFixed(0)} %</b> avec la casquette.`:'Pas de soleil direct sur la façade ce jour-là.';
 }
+let yaw=.5,pit=.3;
+const cv=$('c3d'),ctx=cv.getContext('2d');
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);cv._d=[e.clientX,e.clientY]});
+cv.addEventListener('pointermove',e=>{if(!cv._d)return;
+ yaw=Math.max(-1.4,Math.min(1.4,yaw+(e.clientX-cv._d[0])*.01));pit=Math.max(-.2,Math.min(1.3,pit+(e.clientY-cv._d[1])*.01));
+ cv._d=[e.clientX,e.clientY];draw3d()});
+['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>{cv._d=null}));
+window.addEventListener('resize',()=>draw3d());
+// x: droite vue de l'extérieur, y: haut, z: vers l'extérieur ; vitrage dans le plan z=0
+function draw3d(){
+ const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+ if(!w)return;
+ cv.width=w*dpr;cv.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+ const cs=getComputedStyle(document.documentElement),c=n=>cs.getPropertyValue(n).trim();
+ const {H,W,rec,P,g}=p,hw=W/2,top=H+g,D=rec+P,X=hw+.7,Y0=-.35,Y1=top+.45;
+ const T=[0,H/2,rec/2],dist=3.5+Math.max(W,H)*1.5,f=dist*w/(Math.max(W,H)+2.4);
+ const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pit),sp=Math.sin(pit);
+ const pr=v=>{const x=v[0]-T[0],y=v[1]-T[1],z=v[2]-T[2],x1=x*cy+z*sy,z1=-x*sy+z*cy,y2=y*cp-z1*sp,z2=y*sp+z1*cp,d=dist-z2;return [w/2+f*x1/d,h/2-f*y2/d,d]};
+ const polys=[];
+ const Q=(pts,fill)=>{const a=pts.map(pr),q={a,fill,k:a.reduce((s,v)=>s+v[2],0)/a.length};polys.push(q);return q};
+ const box=(x0,x1,y0,y1,z0,z1,fill)=>{
+  Q([[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]],fill);Q([[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]],fill);
+  Q([[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],fill);Q([[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]],fill);
+  Q([[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]],fill);Q([[x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]],fill)};
+ const wall=c('--wall');
+ Q([[-X,H,rec],[X,H,rec],[X,Y1,rec],[-X,Y1,rec]],wall);
+ Q([[-X,Y0,rec],[X,Y0,rec],[X,0,rec],[-X,0,rec]],wall);
+ Q([[-X,0,rec],[-hw,0,rec],[-hw,H,rec],[-X,H,rec]],wall);
+ Q([[hw,0,rec],[X,0,rec],[X,H,rec],[hw,H,rec]],wall);
+ Q([[-hw,0,0],[-hw,0,rec],[-hw,H,rec],[-hw,H,0]],wall);
+ Q([[hw,0,0],[hw,0,rec],[hw,H,rec],[hw,H,0]],wall);
+ Q([[-hw,0,0],[hw,0,0],[hw,0,rec],[-hw,0,rec]],wall);
+ Q([[-hw,H,0],[hw,H,0],[hw,H,rec],[-hw,H,rec]],wall);
+ const glass=Q([[-hw,0,0],[hw,0,0],[hw,H,0],[-hw,H,0]],'#1d3a4d');
+ const o=sun(p.day,p.hr);
+ let org=[0,H/2,0];
+ if(o.ok){const tp=prof(o),tg=Math.tan(o.g),v=Math.min(H,shadow(tp,P)),l=p.lat_on?Math.min(W,rec*Math.abs(tg)):0,x0=tg>0?-hw+l:-hw,x1=tg>0?hw:hw-l;
+  if(v<H&&x1>x0){Q([[x0,0,0],[x1,0,0],[x1,H-v,0],[x0,H-v,0]],c('--sun')).k=glass.k-1e-3;org=[(x0+x1)/2,H-v,0]}}
+ if(P>0)box(-hw-.3,hw+.3,top,top+.06,rec,D,c('--cap'));
+ polys.sort((a,b)=>b.k-a.k);
+ ctx.lineWidth=1;ctx.strokeStyle=c('--line');
+ for(const q of polys){ctx.beginPath();q.a.forEach((v,i)=>i?ctx.lineTo(v[0],v[1]):ctx.moveTo(v[0],v[1]));ctx.closePath();ctx.fillStyle=q.fill;ctx.fill();ctx.stroke()}
+ if(o.ok){const S=[-Math.sin(o.g)*Math.cos(o.h),Math.sin(o.h),Math.cos(o.g)*Math.cos(o.h)],a=pr(org),b=pr([org[0]+S[0]*1.6,org[1]+S[1]*1.6,org[2]+S[2]*1.6]);
+  ctx.strokeStyle=c('--sun');ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+  ctx.fillStyle=c('--sun');ctx.beginPath();ctx.arc(b[0],b[1],6,0,2*Math.PI);ctx.fill()}
+}
 $('b1').onclick=()=>{p.H=1;p.W=1.2;p.rec=.36;p.P=.5;update()};
 $('b2').onclick=()=>{p.H=2.15;p.W=2;p.rec=.4;p.P=.75;update()};
 $('b3').onclick=()=>{p.P=BEST;update()};
+{const f=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hourCycle:'h23',hour:'numeric',minute:'numeric'}).formatToParts(new Date()),
+  legal=+f.find(x=>x.type=='hour').value+f.find(x=>x.type=='minute').value/60,
+  lo=-p.lon/15+tzOff(TZ,p.day)-eot(p.day)/60;
+ p.hr=Math.max(4,Math.min(22,Math.round((legal-lo)*4)/4))}
 update();
 </script>
 </body>

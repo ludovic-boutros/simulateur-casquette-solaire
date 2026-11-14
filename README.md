@@ -22,6 +22,7 @@ La recherche de ville utilise l'API de géocodage Open-Meteo (accès réseau req
 ## Résultats affichés
 
 - **Vue en coupe** : rayon du soleil choisi, rayons de midi aux solstices, ombre sur la vitre.
+- **Vue 3D** : fenêtre, retrait, casquette et soleil, orientable à la souris ou au doigt. La zone éclairée du vitrage tient compte de la casquette et de la joue latérale.
 - **Tableau** : part du soleil direct qui entre, été (1er juin - 31 août) et hiver (1er déc. - 28 fév.), avec et sans casquette.
 - **Débord optimal** : celui qui maximise l'écart hiver moins été.
 - **Graphes** : ensoleillement sur la journée choisie, vitrage au soleil à midi sur l'année, effet du débord été contre hiver.
