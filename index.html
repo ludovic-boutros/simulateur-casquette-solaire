@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulateur de casquette solaire</title>
+<style>
+:root{--bg:#eef2f4;--card:#fff;--fg:#12222b;--mut:#5d6f78;--line:#d3dce0;--cap:#0f7c7c;--sun:#e8a000;--sum:#d9442b;--win:#2f6bd6;--wall:#c6ccc9;--glass:#6fb2e0}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1a20;--card:#18262d;--fg:#e6eef1;--mut:#8fa3ad;--line:#2c3e47;--cap:#34b5b5;--wall:#3b4a4f;--glass:#4b86b3}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "Avenir Next","Segoe UI",system-ui,sans-serif;padding:16px;max-width:760px;margin-inline:auto}
+h1{font-size:1.45rem;line-height:1.2;margin:.2em 0 .3em}
+h2{font-size:1.05rem;margin:0 0 .6em}
+p.s{color:var(--mut);margin:0 0 1em;font-size:.92rem}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+label{display:block;font-size:.9rem;margin:.7em 0 0}
+label b{float:right;font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--cap)}
+button{font:inherit;font-size:.88rem;padding:7px 12px;border-radius:8px;border:1px solid var(--cap);background:transparent;color:var(--fg);cursor:pointer;margin:0 6px 6px 0}
+button:hover,button:focus-visible{background:var(--cap);color:#fff;outline:none}
+svg{width:100%;height:auto;display:block}
+svg:has(.hl){touch-action:pan-y}
+.tip{position:absolute;z-index:4;pointer-events:none;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:.8rem;line-height:1.4;white-space:nowrap;box-shadow:0 2px 8px #0003;font-variant-numeric:tabular-nums}
+.tip i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+svg text{fill:var(--mut)}
+.leg span{display:inline-block;margin-right:12px;font-size:.82rem;color:var(--mut)}
+.leg i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+table{width:100%;border-collapse:collapse;font-size:.92rem;font-variant-numeric:tabular-nums}
+td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--mut)}
+.big{font-size:1.5rem;font-weight:700}
+.note{font-size:.82rem;color:var(--mut)}
+details summary{cursor:pointer;font-weight:600}
+#city{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+#sug{position:absolute;z-index:5;left:0;right:0;margin:2px 0 0;padding:0;list-style:none;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+#sug:empty{display:none}
+#sug li{padding:9px 10px;cursor:pointer;font-size:.92rem}
+#sug li:hover{background:var(--bg)}
+#sug li.none{color:var(--mut);cursor:default}
+</style>
+</head>
+<body>
+<h1>Quelle profondeur pour la casquette&nbsp;?</h1>
+<p class="s">Simulation de l’ombre portée d’une casquette sur un vitrage en retrait, au fil de l’année. Par défaut&nbsp;: Rennes, plein sud.</p>
+
+<section>
+  <h2>Vue en coupe</h2>
+  <div id="side"></div>
+  <div class="leg"><span><i style="background:var(--sun)"></i>soleil choisi</span><span><i style="background:var(--sum)"></i>midi, 21 juin</span><span><i style="background:var(--win)"></i>midi, 21 déc.</span><span><i style="background:var(--sum);height:6px"></i>ombre sur la vitre</span></div>
+  <p id="now" style="margin:.8em 0 0"></p>
+</section>
+
+<section>
+  <h2>Votre ouverture</h2>
+  <button id="b1">Fenêtre 1 m</button><button id="b2">Baie vitrée 2,15 m</button><button id="b3">Appliquer le débord optimal</button>
+  <div id="c1"></div>
+  <label><input type="checkbox" id="lat_on" checked> Compter l’ombre des joues latérales du retrait</label>
+  <div id="c2"></div>
+  <label for="city">Ville</label>
+  <div style="position:relative"><input type="search" id="city" autocomplete="off" placeholder="Rechercher une ville…" value="Rennes"><ul id="sug"></ul></div>
+  <p id="sunData" class="note" style="margin:.6em 0 0"></p>
+  <details><summary>Lieu et orientation</summary><div id="c3"></div></details>
+</section>
+
+<section>
+  <h2>Part du soleil direct qui entre</h2>
+  <table id="tab"></table>
+  <p id="opt" style="margin:.8em 0 0"></p>
+  <p class="note">Soleil direct sur un mur vertical, ciel dégagé, pondéré par l’angle d’incidence. Été&nbsp;: 1er juin au 31 août. Hiver&nbsp;: 1er décembre au 28 février.</p>
+</section>
+
+<section>
+  <h2>Ensoleillement le <span id="ch3t"></span></h2>
+  <div id="ch3"></div>
+  <div class="leg"><span><i style="background:var(--mut);height:0;border-top:2px dashed var(--mut)"></i>retrait seul</span><span><i style="background:var(--cap)"></i>avec casquette</span><span><i style="background:var(--sun);height:0;border-top:2px dashed var(--sun)"></i>heure choisie</span></div>
+  <p class="note" style="margin:.8em 0 0">Part du vitrage au soleil selon l’heure (heure légale). La date et l’heure se règlent avec les curseurs plus haut. Les trous dans la courbe sont les moments où le soleil n’éclaire pas la façade.</p>
+  <p id="ch3s" style="margin:.5em 0 0"></p>
+</section>
+
+<section>
+  <h2>Vitrage au soleil à midi, toute l’année</h2>
+  <div id="ch1"></div>
+  <div class="leg"><span><i style="background:var(--mut)"></i>retrait seul</span><span><i style="background:var(--cap)"></i>avec casquette</span></div>
+</section>
+
+<section>
+  <h2>Effet du débord, été contre hiver</h2>
+  <div id="ch2"></div>
+  <div class="leg"><span><i style="background:var(--sum)"></i>été</span><span><i style="background:var(--win)"></i>hiver</span><span><i style="background:var(--cap);height:0;border-top:2px dashed var(--cap)"></i>votre débord</span><span><i style="background:var(--sun);height:0;border-top:2px dashed var(--sun)"></i>débord optimal</span></div>
+  <p class="note">Horizontalement&nbsp;: le débord de la casquette. Verticalement&nbsp;: la part du soleil direct qui entre dans la pièce, en moyenne sur la saison. À gauche (0 cm), il n’y a que le retrait. Plus on avance à droite, plus la casquette bloque de soleil, en été comme en hiver. On cherche l’endroit où la courbe rouge (été) est basse alors que la bleue (hiver) reste haute.</p>
+</section>
+
+<p class="note" id="hyp"></p>
+
+<script>
+const $=id=>document.getElementById(id), R=Math.PI/180;
+let BEST=0;
+const p={H:1,W:1.2,rec:.4,P:.6,g:0,day:172,hr:14,lat:48.11,lon:-1.68,ori:180,lat_on:true};
+const G=[
+ ['c1',[['H','Hauteur du vitrage',.5,3,.05,'m'],['W','Largeur du vitrage',.4,3.5,.05,'m'],['rec','Retrait du vitrage dans le mur',0,.8,.01,'m'],['P','Débord de la casquette (hors du mur)',0,1.5,.01,'m'],['g','Casquette au-dessus du vitrage',0,.5,.01,'m'],['day','Date',1,365,1,''],['hr','Heure solaire',4,22,.25,'']]],
+ ['c3',[['lat','Latitude',-66,66,.01,'°'],['lon','Longitude',-180,180,.01,'°'],['ori','Orientation de la façade (180 = sud, 0 = nord)',0,360,1,'°']]]];
+function fmt(k,v){
+ if(k=='day')return new Date(2025,0,v).toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
+ if(k=='hr'){const h=Math.floor(v),m=Math.round((v-h)*60);return h+' h '+String(m).padStart(2,'0')}
+ const u=G.flatMap(g=>g[1]).find(c=>c[0]==k)[5];return (+v).toFixed(2).replace('.',',')+' '+u}
+for(const [id,list] of G)$(id).innerHTML=list.map(([k,l,a,b,s])=>`<label>${l}<b id="v_${k}"></b><input type="range" id="${k}" min="${a}" max="${b}" step="${s}"></label>`).join('');
+for(const k of Object.keys(p))if(k!='lat_on')$(k).addEventListener('input',e=>{p[k]=+e.target.value;update()});
+$('lat_on').addEventListener('change',e=>{p.lat_on=e.target.checked;update()});
+function sync(){for(const k of Object.keys(p))if(k!='lat_on'){$(k).value=p[k];$('v_'+k).textContent=fmt(k,p[k])}}
+
+function sun(n,hr,ori){
+ const d=23.44*Math.sin(2*Math.PI*(284+n)/365)*R,f=p.lat*R,w=15*(hr-12)*R;
+ const h=Math.asin(Math.sin(f)*Math.sin(d)+Math.cos(f)*Math.cos(d)*Math.cos(w));
+ const A=Math.atan2(Math.sin(w),Math.cos(w)*Math.sin(f)-Math.tan(d)*Math.cos(f))/R;
+ const g=(((180+A-p.ori)%360+540)%360-180)*R;
+ return {h,g,A,ok:h>.02&&Math.cos(g)>.02};
+}
+const prof=o=>Math.tan(o.h)/Math.cos(o.g);
+function shadow(tp,Pv){return Math.max(p.rec*tp,(p.rec+Pv)*tp-p.g)}
+function lit(tp,tg,Pv){
+ const a=1-Math.min(1,shadow(tp,Pv)/p.H),l=p.lat_on?Math.min(1,p.rec*Math.abs(tg)/p.W):0;
+ return a*(1-l)}
+const rng=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
+function samples(days){const s=[];for(const n of days)for(let t=4;t<=22;t+=.5){const o=sun(n,t);if(o.ok)s.push([prof(o),Math.tan(o.g),Math.cos(o.h)*Math.cos(o.g)])}return s}
+function pass(S,Pv){let a=0,b=0;for(const [tp,tg,w] of S){a+=w*lit(tp,tg,Pv);b+=w}return b?100*a/b:0}
+
+function side(){
+ const {H,rec,g}=p,D=rec+p.P,top=H+g;
+ let s=`<svg viewBox="-2.4 -3.75 3.8 4.15" font-size=".11">`;
+ s+=`<rect x="${-rec}" y="${-(top+.4)}" width="${rec+.35}" height="${top+.4-H}" fill="var(--wall)"/>`;
+ s+=`<rect x="${-rec}" y="0" width="${rec+.35}" height=".4" fill="var(--wall)"/>`;
+ s+=`<line x1="0" y1="0" x2="0" y2="${-H}" stroke="var(--glass)" stroke-width=".045"/>`;
+ if(p.P>0)s+=`<rect x="${-D}" y="${-(top+.06)}" width="${p.P}" height=".06" fill="var(--cap)"/>`;
+ const ray=(o,c,w,d)=>{if(!o.ok)return'';const tp=prof(o);return `<line x1="${-D}" y1="${-top}" x2="1.1" y2="${-(top-(1.1+D)*tp)}" stroke="${c}" stroke-width="${w}" ${d?'stroke-dasharray=".08 .06"':''}/>`};
+ s+=ray(sun(172,12),'var(--sum)',.025,1)+ray(sun(355,12),'var(--win)',.025,1);
+ const o=sun(p.day,p.hr);
+ s+=ray(o,'var(--sun)',.04,0);
+ if(o.ok){const v=Math.min(H,shadow(prof(o),p.P));s+=`<line x1="0" y1="${-H}" x2="0" y2="${-(H-v)}" stroke="var(--sum)" stroke-width=".07"/>`}
+ s+=`<text x="-2.3" y="-1.5">Extérieur</text><text x=".5" y="-1.5">Intérieur</text>`;
+ s+=`<text x="${-D}" y="${-(top+.14)}">${(p.P*100).toFixed(0)} cm</text></svg>`;
+ $('side').innerHTML=s;
+}
+function chart(id,o){
+ const W=360,Hh=180,l=32,r=8,t=8,b=22,pw=W-l-r,ph=Hh-t-b;
+ const X=x=>l+(x-o.x0)/(o.x1-o.x0)*pw,Y=y=>t+ph-y/100*ph;
+ let s=`<svg viewBox="0 0 ${W} ${Hh}" font-size="9">`;
+ for(const y of[0,50,100])s+=`<line x1="${l}" x2="${W-r}" y1="${Y(y)}" y2="${Y(y)}" stroke="var(--line)"/><text x="${l-4}" y="${Y(y)+3}" text-anchor="end">${y} %</text>`;
+ for(const [x,lab] of o.ticks)s+=`<text x="${X(x)}" y="${Hh-6}" text-anchor="middle">${lab}</text>`;
+ for(const m of o.marks)s+=`<line x1="${X(m[0])}" x2="${X(m[0])}" y1="${t}" y2="${t+ph}" stroke="${m[1]}" stroke-dasharray="3 3"/>`;
+ for(const se of o.series){let d='',pv=false;for(const q of se.pts){if(q[1]==null){pv=false;continue}d+=(pv?'L':'M')+X(q[0]).toFixed(1)+' '+Y(q[1]).toFixed(1);pv=true}s+=`<path d="${d}" fill="none" stroke="${se.c}" stroke-width="2" ${se.dash?'stroke-dasharray="5 3"':''}/>`}
+ s+=`<line class="hl" y1="${t}" y2="${t+ph}" stroke="var(--fg)" stroke-opacity=".4" visibility="hidden"/>`;
+ o.series.forEach((se,i)=>{s+=`<circle class="hd" r="3.5" fill="${se.c}" stroke="var(--card)" visibility="hidden"/>`});
+ const box=$(id);box.style.position='relative';
+ box.innerHTML=s+'</svg><div class="tip" hidden></div>';
+ const svg=box.querySelector('svg'),tip=box.querySelector('.tip'),hl=svg.querySelector('.hl'),dots=[...svg.querySelectorAll('.hd')];
+ const hide=()=>{tip.hidden=true;hl.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'))};
+ svg.addEventListener('pointerleave',hide);
+ svg.addEventListener('pointermove',e=>{
+  const rc=svg.getBoundingClientRect(),vx=(e.clientX-rc.left)/rc.width*W;
+  if(vx<l||vx>W-r){hide();return}
+  const xv=o.x0+(vx-l)/pw*(o.x1-o.x0),ref=o.series[0].pts;
+  let k=0,bd=1e9;ref.forEach((q,j)=>{const dd=Math.abs(q[0]-xv);if(dd<bd){bd=dd;k=j}});
+  const x0=ref[k][0],cx=X(x0);
+  hl.setAttribute('x1',cx);hl.setAttribute('x2',cx);hl.setAttribute('visibility','visible');
+  let h=`<b>${o.xfmt(x0)}</b>`;
+  o.series.forEach((se,i)=>{const y=se.pts[k]&&se.pts[k][1],d=dots[i];
+   if(y==null){d.setAttribute('visibility','hidden')}else{d.setAttribute('cx',cx);d.setAttribute('cy',Y(y));d.setAttribute('visibility','visible')}
+   h+=`<br><i style="background:${se.c}"></i>${se.name} : ${y==null?'—':y.toFixed(0)+' %'}`});
+  tip.innerHTML=h;tip.hidden=false;
+  const bw=box.clientWidth,px=cx/W*bw;
+  tip.style.left=Math.max(0,Math.min(bw-tip.offsetWidth,px+12>bw-tip.offsetWidth?px-tip.offsetWidth-12:px+12))+'px';
+  tip.style.top='4px';
+ });
+}
+let TZ='Europe/Paris',tmr,seq=0,CITY='Rennes',CLAT=48.11,CLON=-1.68;
+const eot=n=>{const B=2*Math.PI*(n-81)/364;return 9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B)};
+function tzOff(tz,n){
+ try{const d=new Date(Date.UTC(2026,0,n,12));
+  const f=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric'}).formatToParts(d);
+  const g=k=>+f.find(x=>x.type==k).value;
+  return (Date.UTC(g('year'),g('month')-1,g('day'),g('hour'),g('minute'),g('second'))-d)/36e5}
+ catch(e){return Math.round(p.lon/15)}}
+const cityIn=$('city'),sug=$('sug');
+cityIn.addEventListener('input',()=>{clearTimeout(tmr);const q=cityIn.value.trim();if(q.length<2){sug.innerHTML='';return}tmr=setTimeout(()=>search(q),250)});
+cityIn.addEventListener('keydown',e=>{if(e.key=='Enter'){const f=sug.querySelector('li:not(.none)');if(f){f.click();e.preventDefault()}}});
+document.addEventListener('click',e=>{if(!e.target.closest('#sug,#city'))sug.innerHTML=''});
+const CITIES='Paris|48.85|2.35|Europe/Paris|France;Lyon|45.76|4.84|Europe/Paris|France;Marseille|43.30|5.37|Europe/Paris|France;Toulouse|43.60|1.44|Europe/Paris|France;Nice|43.70|7.27|Europe/Paris|France;Nantes|47.22|-1.55|Europe/Paris|France;Montpellier|43.61|3.88|Europe/Paris|France;Strasbourg|48.57|7.75|Europe/Paris|France;Bordeaux|44.84|-0.58|Europe/Paris|France;Lille|50.63|3.06|Europe/Paris|France;Rennes|48.11|-1.68|Europe/Paris|France;Brest|48.39|-4.49|Europe/Paris|France;Saint-Malo|48.65|-2.03|Europe/Paris|France;Saint-Cast-le-Guildo|48.63|-2.25|Europe/Paris|France;Quimper|48.00|-4.10|Europe/Paris|France;Lorient|47.75|-3.37|Europe/Paris|France;Vannes|47.66|-2.76|Europe/Paris|France;Caen|49.18|-0.37|Europe/Paris|France;Rouen|49.44|1.10|Europe/Paris|France;Tours|47.39|0.69|Europe/Paris|France;Angers|47.47|-0.55|Europe/Paris|France;Grenoble|45.19|5.72|Europe/Paris|France;Dijon|47.32|5.04|Europe/Paris|France;Clermont-Ferrand|45.78|3.08|Europe/Paris|France;Limoges|45.83|1.26|Europe/Paris|France;Poitiers|46.58|0.34|Europe/Paris|France;La Rochelle|46.16|-1.15|Europe/Paris|France;Metz|49.12|6.18|Europe/Paris|France;Orléans|47.90|1.91|Europe/Paris|France;Perpignan|42.70|2.90|Europe/Paris|France;Ajaccio|41.92|8.74|Europe/Paris|France;Bruxelles|50.85|4.35|Europe/Brussels|Belgique;Genève|46.20|6.14|Europe/Zurich|Suisse;Montréal|45.50|-73.57|America/Toronto|Canada;Londres|51.51|-0.13|Europe/London|Royaume-Uni;Madrid|40.42|-3.70|Europe/Madrid|Espagne;Lisbonne|38.72|-9.14|Europe/Lisbon|Portugal'.split(';').map(s=>{const [name,la,lo,tz,country]=s.split('|');return {name,latitude:+la,longitude:+lo,timezone:tz,country}});
+const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function show(L,note){
+ sug.innerHTML='';
+ L.forEach(c=>{const li=document.createElement('li');li.textContent=[c.name,c.admin1,c.country].filter(Boolean).join(', ');li.onclick=()=>pick(c);sug.appendChild(li)});
+ if(note||!L.length){const li=document.createElement('li');li.className='none';li.textContent=note||'Aucun résultat';sug.appendChild(li)}}
+async function search(q){
+ const my=++seq,n=norm(q);
+ const loc=CITIES.filter(c=>norm(c.name).startsWith(n)).slice(0,4);
+ show(loc,'Recherche en ligne…');
+ try{const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=6&language=fr&format=json&name='+encodeURIComponent(q));
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();if(my!=seq)return;
+  const api=(j.results||[]).filter(c=>!loc.some(l=>norm(l.name)==norm(c.name)&&Math.abs(l.latitude-c.latitude)<.3));
+  show(loc.concat(api).slice(0,8))}
+ catch(e){if(my!=seq)return;show(loc,'Recherche en ligne impossible ('+e.message+'). Ouvrez la page dans un navigateur, hors aperçu intégré.')}}
+function pick(c){p.lat=+c.latitude.toFixed(2);p.lon=+c.longitude.toFixed(2);TZ=c.timezone||TZ;p.ori=c.latitude<0?0:180;cityIn.value=c.name;CITY=c.name;CLAT=p.lat;CLON=p.lon;sug.innerHTML='';update()}
+function update(){
+ sync();side();
+ const o=sun(p.day,p.hr),dst=tzOff(TZ,p.day),lo=-p.lon/15+dst-eot(p.day)/60,lg=((p.hr+lo)%24+24)%24;
+ const hh=Math.floor(lg),mm=String(Math.round((lg-hh)*60)%60).padStart(2,'0');
+ const comp=(((180+o.A)%360)+360)%360;
+ if(o.h<=.02)$('now').innerHTML='Le soleil est couché à cet instant.';
+ else if(!o.ok)$('now').innerHTML=`Le soleil (hauteur ${(o.h/R).toFixed(0)}°) est derrière ou dans le plan de la façade.`;
+ else{const v=Math.min(p.H,shadow(prof(o),p.P));
+  $('now').innerHTML=`<span class="big">${(100*lit(prof(o),Math.tan(o.g),p.P)).toFixed(0)} %</span> du vitrage au soleil.<br><span class="note">Soleil à ${(o.h/R).toFixed(0)}° de hauteur, azimut ${comp.toFixed(0)}°, vers ${hh} h ${mm} (heure légale). Ombre de la casquette&nbsp;: ${(v*100).toFixed(0)} cm depuis le haut.</span>`}
+ const Su=samples(rng(152,243)),Wi=samples(rng(335,365).concat(rng(1,59)));
+ const f=x=>x.toFixed(0)+' %';
+ $('tab').innerHTML=`<tr><th></th><th>Retrait seul</th><th>Avec casquette</th></tr><tr><td>Été</td><td>${f(pass(Su,0))}</td><td><b>${f(pass(Su,p.P))}</b></td></tr><tr><td>Hiver</td><td>${f(pass(Wi,0))}</td><td><b>${f(pass(Wi,p.P))}</b></td></tr>`;
+ const cs=[],cw=[];let best=0,bs=-1e9;
+ for(let q=0;q<=150;q+=2){const a=pass(Su,q/100),b=pass(Wi,q/100);cs.push([q/100,a]);cw.push([q/100,b]);if(b-a>bs){bs=b-a;best=q/100}}
+ BEST=best;
+ $('opt').innerHTML=`Débord qui maximise l’écart hiver moins été&nbsp;: <b>${(best*100).toFixed(0)} cm</b> hors du mur (profondeur ${((best+p.rec)*100).toFixed(0)} cm depuis le vitrage).`;
+ const A=[],B=[];
+ for(let n=1;n<=365;n+=3){const q=sun(n,12);if(!q.ok)continue;const tp=prof(q),tg=Math.tan(q.g);A.push([n,100*lit(tp,tg,0)]);B.push([n,100*lit(tp,tg,p.P)])}
+ chart('ch1',{x0:1,x1:365,ticks:[[1,'J'],[32,'F'],[60,'M'],[91,'A'],[121,'M'],[152,'J'],[182,'J'],[213,'A'],[244,'S'],[274,'O'],[305,'N'],[335,'D']],marks:[[p.day,'var(--sun)']],xfmt:n=>fmt('day',Math.round(n)),series:[{pts:A,c:'var(--mut)',name:'Retrait seul'},{pts:B,c:'var(--cap)',name:'Avec casquette'}]});
+ chart('ch2',{x0:0,x1:1.5,ticks:[0,.25,.5,.75,1,1.25,1.5].map(x=>[x,(x*100)+' cm']),marks:[[p.P,'var(--cap)'],[best,'var(--sun)']],xfmt:n=>'Débord '+Math.round(n*100)+' cm',series:[{pts:cs,c:'var(--sum)',name:'Été'},{pts:cw,c:'var(--win)',name:'Hiver'}]});
+ const off=lo,D=[],E=[];let sa=0,sb=0,sw=0,t0=null,t1=null;
+ for(let t=4;t<=22;t+=.25){const q=sun(p.day,t);
+  if(!q.ok){D.push([t+off,null]);E.push([t+off,null]);continue}
+  const tp=prof(q),tg=Math.tan(q.g),w=Math.cos(q.h)*Math.cos(q.g),a=lit(tp,tg,0),b=lit(tp,tg,p.P);
+  D.push([t+off,100*a]);E.push([t+off,100*b]);sa+=w*a;sb+=w*b;sw+=w;if(t0==null)t0=t+off;t1=t+off}
+ const hm=x=>{x=((x%24)+24)%24;let h=Math.floor(x),m=Math.round((x-h)*60);if(m==60){h=(h+1)%24;m=0}return h+' h '+String(m).padStart(2,'0')};
+ $('ch3t').textContent=fmt('day',p.day);
+ {const place=(p.lat==CLAT&&p.lon==CLON)?CITY:`le lieu choisi (${(+p.lat).toFixed(2)}°, ${(+p.lon).toFixed(2)}°)`;
+  $('hyp').textContent=`Hypothèses : casquette plate et plus large que le vitrage, posée au-dessus du linteau ; heures solaires converties en heure légale pour ${place} (midi solaire à ${hm(12+lo)} le ${fmt('day',p.day)}) ; pas de masques lointains ni de rayonnement diffus. Les volets restent utiles pour le soleil bas de l’après-midi.`}
+ {const dl=23.44*Math.sin(2*Math.PI*(284+p.day)/365)*R,fl=p.lat*R,c0=(Math.sin(-.833*R)-Math.sin(fl)*Math.sin(dl))/(Math.cos(fl)*Math.cos(dl)),mx=(90-Math.abs(p.lat-dl/R)).toFixed(0);
+  if(Math.abs(c0)>1)$('sunData').textContent=`Hauteur maximale du soleil : ${mx}°. ${c0>1?'Le soleil ne se lève pas ce jour-là.':'Soleil de minuit ce jour-là.'}`;
+  else{const hw=Math.acos(c0)/R/15;$('sunData').innerHTML=`${fmt('day',p.day)} : lever <b>${hm(12-hw+lo)}</b> · midi solaire <b>${hm(12+lo)}</b> · coucher <b>${hm(12+hw+lo)}</b> (heure légale) · jour de ${hm(2*hw)} · hauteur max ${mx}°.`}}
+ chart('ch3',{x0:4+off,x1:22+off,ticks:rng(Math.ceil(4+off),Math.floor(22+off)).filter(h=>h%2==0).map(h=>[h,h+' h']),marks:[[p.hr+off,'var(--sun)']],xfmt:hm,series:[{pts:D,c:'var(--mut)',dash:1,name:'Retrait seul'},{pts:E,c:'var(--cap)',name:'Avec casquette'}]});
+ $('ch3s').innerHTML=sw?`Soleil sur la façade de ${hm(t0)} à ${hm(t1)}. Sur la journée, <b>${(100*sa/sw).toFixed(0)} %</b> du soleil direct entre avec le retrait seul, <b>${(100*sb/sw).toFixed(0)} %</b> avec la casquette.`:'Pas de soleil direct sur la façade ce jour-là.';
+}
+$('b1').onclick=()=>{p.H=1;p.W=1.2;p.rec=.36;p.P=.5;update()};
+$('b2').onclick=()=>{p.H=2.15;p.W=2;p.rec=.4;p.P=.75;update()};
+$('b3').onclick=()=>{p.P=BEST;update()};
+update();
+</script>
+</body>
+</html>
