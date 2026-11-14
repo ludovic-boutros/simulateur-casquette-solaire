@@ -315,7 +315,7 @@ function draw3d(){
 }
 const preset=(H,W,rec)=>{Object.assign(p,{H,W,rec});update();p.P=BEST;update()};
 $('b1').onclick=()=>preset(1,1.6,.36);
-$('b2').onclick=()=>preset(2.15,2.6,.4);
+$('b2').onclick=()=>preset(2.15,2.6,.36);
 $('b3').onclick=()=>{p.P=BEST;update()};
 {const f=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hourCycle:'h23',hour:'numeric',minute:'numeric'}).formatToParts(new Date()),
   legal=+f.find(x=>x.type=='hour').value+f.find(x=>x.type=='minute').value/60,
